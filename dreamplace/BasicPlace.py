@@ -247,6 +247,7 @@ class PlaceOpCollection(object):
         self.pin_utilization_map_op = None
         self.nctugr_congestion_map_op = None
         self.adjust_node_area_op = None
+        self.gift_init_op = None 
 
 
 class BasicPlace(nn.Module):
@@ -402,7 +403,8 @@ class BasicPlace(nn.Module):
         # rectilinear minimum steiner tree wirelength from flute
         # can only be called once
         #self.op_collections.rmst_wl_op = self.build_rmst_wl(params, placedb, self.op_collections.pin_pos_op, torch.device("cpu"))
-        self.op_collections.timing_op = self.build_timing_op(params, placedb, timer)
+        if params.timing_opt_flag:
+            self.op_collections.timing_op = self.build_timing_op(params, placedb, timer)
         # legality check
         self.op_collections.legality_check_op = self.build_legality_check(
             params, placedb, self.data_collections, self.device)
@@ -730,13 +732,16 @@ class BasicPlace(nn.Module):
                 logging.error("legality check failed in greedy legalization, " \
                     "return illegal results after greedy legalization.")
                 return pos2
-            pos3 = al(pos1, pos2)
-            legal = self.op_collections.legality_check_op(pos3)
-            if not legal:
-                logging.error("legality check failed in abacus legalization, " \
-                    "return legal results after greedy legalization.")
+            if params.abacus_legalize_flag: 
+                pos3 = al(pos1, pos2)
+                legal = self.op_collections.legality_check_op(pos3)
+                if not legal:
+                    logging.error("legality check failed in abacus legalization, " \
+                        "return legal results after greedy legalization.")
+                    return pos2
+                return pos3
+            else:
                 return pos2
-            return pos3
 
         return build_legalization_op
 
@@ -756,8 +761,9 @@ class BasicPlace(nn.Module):
                 return pos
             else:
                 ### start abacus legalizer
-                for i in range(len(placedb.regions)+1):
-                    pos = legal_ops[i][1](pos, pos_ml_list[i], pos_gl_list[i])
+                if params.abacus_legalize_flag: 
+                    for i in range(len(placedb.regions)+1):
+                        pos = legal_ops[i][1](pos, pos_ml_list[i], pos_gl_list[i])
             return pos
 
         def build_individual_legalization_ops(pos, region_id):

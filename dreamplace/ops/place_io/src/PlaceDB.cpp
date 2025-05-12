@@ -123,6 +123,7 @@ void PlaceDB::lef_macro_cbk(LefParser::lefiMacro const& m) {
       index_type siteId = m_mSiteName2Index.at(m.siteName());
       m_vSiteUsedCount[siteId] += 1; 
     } else {
+      dreamplaceAssertMsg(m_coreSiteId < m_vSite.size(), "core SITE not found (%u < %lu). Probably MISSING technology LEF (tlef) or SITE definition in LEF", m_coreSiteId, m_vSite.size());
       dreamplacePrint(kWARN, "Macro site name %s is NOT DEFINED in site names, add to default site %s\n", 
           m.siteName(), m_vSite[m_coreSiteId].name().c_str());
       m_vSiteUsedCount[m_coreSiteId] += 1; 
@@ -279,6 +280,9 @@ void PlaceDB::add_def_row(DefParser::Row const& r) {
   row.setName(r.row_name);
   row.setMacroName(r.macro_name);
   row.setOrient(r.orient);
+  auto siteIter = m_mSiteName2Index.find(row.macroName());
+  dreamplaceAssertMsg(m_mSiteName2Index.find(row.macroName()) != m_mSiteName2Index.end(), 
+      "Site name %s in Row %s is not defined in LEF", row.macroName().c_str(), row.name().c_str());
   index_type siteId = m_mSiteName2Index.at(row.macroName());
   Site const& site = m_vSite.at(siteId);
   // only support N and FS, because I'm not sure what the format should be for
@@ -460,10 +464,10 @@ void PlaceDB::add_def_pin(DefParser::Pin const& p) {
         for (std::size_t j = 0; j < pport.vLayer.size(); ++j) {
           if (!(pport.origin[0] == -1 && pport.origin[1] == -1)) {
             node.encompass(MacroPort::box_type(
-                  (pport.origin[0] + pport.vBbox[i][0]) * lefDefUnitRatio(), 
-                  (pport.origin[1] + pport.vBbox[i][1]) * lefDefUnitRatio(), 
-                  (pport.origin[0] + pport.vBbox[i][2]) * lefDefUnitRatio(),
-                  (pport.origin[1] + pport.vBbox[i][3]) * lefDefUnitRatio()
+                  (pport.origin[0] + pport.vBbox[j][0]) * lefDefUnitRatio(), 
+                  (pport.origin[1] + pport.vBbox[j][1]) * lefDefUnitRatio(), 
+                  (pport.origin[0] + pport.vBbox[j][2]) * lefDefUnitRatio(),
+                  (pport.origin[1] + pport.vBbox[j][3]) * lefDefUnitRatio()
                   ));
             hasOrigin = true; 
           }
@@ -558,12 +562,12 @@ void PlaceDB::add_def_pin(DefParser::Pin const& p) {
       DefParser::PinPort const& pport = p.vPinPort[i]; 
       for (std::size_t j = 0; j < pport.vLayer.size(); ++j) {
         if (!(pport.origin[0] == -1 && pport.origin[1] == -1)) {
-          macroPort.layers() .push_back(pport.vLayer[i]); 
+          macroPort.layers() .push_back(pport.vLayer[j]); 
           macroPort.boxes().push_back(MacroPort::box_type(
-                (pport.origin[0] + pport.vBbox[i][0] - node.xl()) * lefDefUnitRatio(), 
-                (pport.origin[1] + pport.vBbox[i][1] - node.yl()) * lefDefUnitRatio(), 
-                (pport.origin[0] + pport.vBbox[i][2] - node.xl()) * lefDefUnitRatio(),
-                (pport.origin[1] + pport.vBbox[i][3] - node.yl()) * lefDefUnitRatio()
+                (pport.origin[0] + pport.vBbox[j][0] - node.xl()) * lefDefUnitRatio(), 
+                (pport.origin[1] + pport.vBbox[j][1] - node.yl()) * lefDefUnitRatio(), 
+                (pport.origin[0] + pport.vBbox[j][2] - node.xl()) * lefDefUnitRatio(),
+                (pport.origin[1] + pport.vBbox[j][3] - node.yl()) * lefDefUnitRatio()
                 ));
         }
       }
@@ -795,6 +799,21 @@ void PlaceDB::add_def_group(DefParser::Group const& g) {
 
   // node indices in group are not set yet
   // they need to be set in the adjustParams() function
+}
+void PlaceDB::add_def_track(defiTrack const& t) {
+  dreamplacePrint(kWARN, "Track definition in DEF ignored\n");
+}
+void PlaceDB::add_def_via(defiVia const& v) {
+  dreamplacePrint(kWARN, "Via definition in DEF ignored\n");
+}
+void PlaceDB::add_def_snet(defiNet const& n) {
+  dreamplacePrint(kWARN, "SPECIALNET definition in DEF ignored\n");
+}
+void PlaceDB::add_def_gcellgrid(DefParser::GCellGrid const& g) {
+  dreamplacePrint(kWARN, "GCELLGRID definition in DEF ignored\n");
+}
+void PlaceDB::add_def_route_blockage(std::vector<std::vector<int>> const&, std::string const&) {
+  dreamplacePrint(kWARN, "ROUTE BLOCKAGE definition in DEF ignored\n");
 }
 void PlaceDB::end_def_design() {
   // make sure rows are sorted from bottom to up
