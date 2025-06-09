@@ -22,8 +22,9 @@ int computeHPWLAtomicLauncher(const T* x, const T* y, const int* pin2net_map,
 /// @param net_weights weight of nets
 /// @param net_mask an array to record whether compute the where for a net or
 /// not
-at::Tensor hpwl_atomic_forward(at::Tensor pos, at::Tensor pin2net_map,
-                               at::Tensor net_weights, at::Tensor net_mask) {
+std::pair<at::Tensor, at::Tensor> hpwl_atomic_forward(
+    at::Tensor pos, at::Tensor pin2net_map,
+    at::Tensor net_weights, at::Tensor net_mask) {
   CHECK_FLAT_CPU(pos);
   CHECK_EVEN(pos);
   CHECK_CONTIGUOUS(pos);
@@ -61,11 +62,12 @@ at::Tensor hpwl_atomic_forward(at::Tensor pos, at::Tensor pin2net_map,
   // (partial_hpwl_max-partial_hpwl_min).to(torch::kDouble).mul(1.0/1000) << "\n";
 
   auto hpwl = (partial_hpwl_max - partial_hpwl_min);
+  auto plain_hpwl = hpwl.sum();
   if (net_weights.numel()) {
     hpwl.mul_(net_weights.view({1, num_nets}));
   }
 
-  return hpwl.sum();
+  return {plain_hpwl, hpwl.sum()};
 }
 
 template <typename T>

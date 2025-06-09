@@ -24,6 +24,7 @@ class EvalMetrics (object):
         self.wirelength = None
         self.density = None
         self.density_weight = None
+        self.plain_hpwl = None
         self.hpwl = None
         self.rmst_wl = None
         self.overflow = None
@@ -60,6 +61,8 @@ class EvalMetrics (object):
                 content += ", DensityWeight %.6E" % (self.density_weight)
             else:
                 content += ", DensityWeight [%s]" % ", ".join(["%.3E" % i for i in self.density_weight])
+        if self.plain_hpwl is not None:
+            content += ", HPWL %.6E" % (self.plain_hpwl)
         if self.hpwl is not None:
             content += ", wHPWL %.6E" % (self.hpwl)
         if self.rmst_wl is not None:
@@ -114,7 +117,8 @@ class EvalMetrics (object):
             if "density" in ops:
                 self.density = ops["density"](var).data
             if "hpwl" in ops:
-                self.hpwl = ops["hpwl"](var).data
+                plain_hpwl, hpwl = ops["hpwl"](var)
+                self.plain_hpwl, self.hpwl = plain_hpwl.data, hpwl.data
             if "rmst_wls" in ops:
                 rmst_wls = ops["rmst_wls"](var)
                 self.rmst_wl = rmst_wls.sum().data

@@ -34,9 +34,9 @@ class HPWLFunction(Function):
             func = hpwl_cuda.forward
         else:
             func = hpwl_cpp.forward
-        output = func(pos.view(pos.numel()), flat_netpin, netpin_start,
-                      net_weights, net_mask)
-        return output
+        plain_wl, output = func(pos.view(pos.numel()), flat_netpin, netpin_start,
+                                net_weights, net_mask)
+        return plain_wl, output
 
 
 class HPWLAtomicFunction(Function):
@@ -53,9 +53,9 @@ class HPWLAtomicFunction(Function):
             func = hpwl_cuda_atomic.forward
         else:
             func = hpwl_cpp_atomic.forward
-        output = func(pos.view(pos.numel()), pin2net_map, net_weights,
-                      net_mask)
-        return output
+        plain_wl, output = func(pos.view(pos.numel()), pin2net_map, net_weights,
+                                net_mask)
+        return plain_wl, output
 
 
 class HPWL(nn.Module):
@@ -94,6 +94,10 @@ class HPWL(nn.Module):
         self.algorithm = algorithm
 
     def forward(self, pos):
+        """
+        @return the return is a tuple which contains both the plain hpwl without
+        multiplying weights, and the weighted hpwl.
+        """
         if self.algorithm == 'net-by-net':
             return HPWLFunction.apply(pos, self.flat_netpin, self.netpin_start,
                                       self.net_weights, self.net_mask)

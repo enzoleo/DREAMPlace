@@ -23,9 +23,10 @@ int computeHPWLLauncher(const T* x, const T* y, const int* flat_netpin,
 /// @param net_weights weight of nets
 /// @param net_mask an array to record whether compute the where for a net or
 /// not
-at::Tensor hpwl_forward(at::Tensor pos, at::Tensor flat_netpin,
-                        at::Tensor netpin_start, at::Tensor net_weights,
-                        at::Tensor net_mask) {
+std::pair<at::Tensor, at::Tensor> hpwl_forward(
+    at::Tensor pos, at::Tensor flat_netpin,
+    at::Tensor netpin_start, at::Tensor net_weights,
+    at::Tensor net_mask) {
   CHECK_FLAT_CPU(pos);
   CHECK_EVEN(pos);
   CHECK_CONTIGUOUS(pos);
@@ -49,10 +50,11 @@ at::Tensor hpwl_forward(at::Tensor pos, at::Tensor flat_netpin,
         DREAMPLACE_TENSOR_DATA_PTR(net_mask, unsigned char), num_nets,
         at::get_num_threads(), DREAMPLACE_TENSOR_DATA_PTR(hpwl, scalar_t));
   });
+  auto plain_hpwl = hpwl.sum();
   if (net_weights.numel()) {
     hpwl.mul_(net_weights);
   }
-  return hpwl.sum();
+  return {plain_hpwl, hpwl.sum()};
 }
 
 template <typename T>

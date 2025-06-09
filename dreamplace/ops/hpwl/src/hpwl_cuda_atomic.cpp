@@ -23,8 +23,9 @@ int computeHPWLCudaAtomicLauncher(const T* x, const T* y,
 /// @param net_weights weight of nets
 /// @param net_mask an array to record whether compute the where for a net or
 /// not
-at::Tensor hpwl_atomic_forward(at::Tensor pos, at::Tensor pin2net_map,
-                               at::Tensor net_weights, at::Tensor net_mask) {
+std::pair<at::Tensor, at::Tensor> hpwl_atomic_forward(
+    at::Tensor pos, at::Tensor pin2net_map,
+    at::Tensor net_weights, at::Tensor net_mask) {
   typedef int T;
 
   CHECK_FLAT_CUDA(pos);
@@ -75,10 +76,11 @@ at::Tensor hpwl_atomic_forward(at::Tensor pos, at::Tensor pin2net_map,
                at::toString(pos.scalar_type()), "'");
   }
 
+  auto plain_hpwl = hpwl.sum().mul_(1.0 / 1000);
   if (net_weights.numel()) {
     hpwl.mul_(net_weights.view({1, num_nets}));
   }
-  return hpwl.sum().mul_(1.0 / 1000);
+  return {plain_hpwl, hpwl.sum().mul_(1.0 / 1000)};
 }
 
 DREAMPLACE_END_NAMESPACE
