@@ -83,14 +83,6 @@ set(LIMBO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Limbo)
 message(STATUS "LIMBO_SOURCE_DIR ${LIMBO_SOURCE_DIR}")
 set(LIMBO_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/thirdparty/Limbo)
 message(STATUS "LIMBO_BINARY_DIR ${LIMBO_BINARY_DIR}")
-if(CUDA_FOUND)
-  if (${CUDA_VERSION_MAJOR} VERSION_GREATER_EQUAL "11")
-    set(CUB_DIR ${CUDA_INCLUDE_DIRS})
-  else()
-    set(CUB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/cub)
-  endif()
-endif()
-message(STATUS "CUB_DIR ${CUB_DIR}")
 
 # munkres-cpp for Hungarian algorithm 
 set(MUNKRES_CPP_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/munkres-cpp/src)
@@ -117,15 +109,7 @@ include_directories(${OPENTIMER_SOURCE_DIR})
 
 if (CUDA_FOUND)
   if (NOT CMAKE_CUDA_ARCHITECTURES)
-    set(CMAKE_CUDA_ARCHITECTURES 6.0 6.1 7.0)
-    if (${CUDA_VERSION_MAJOR} VERSION_GREATER "9")
-      list(APPEND CMAKE_CUDA_ARCHITECTURES 7.5)
-    endif(${CUDA_VERSION_MAJOR} VERSION_GREATER "9")
-    if (${CUDA_VERSION_MAJOR} VERSION_GREATER "10")
-      list(APPEND CMAKE_CUDA_ARCHITECTURES 8.0)
-      # arch 8.6 removed for compatability with 3090
-      # list(APPEND CMAKE_CUDA_ARCHITECTURES 8.6)
-    endif(${CUDA_VERSION_MAJOR} VERSION_GREATER "10")
+    set(CMAKE_CUDA_ARCHITECTURES 8.0 8.6 8.7 9.0)
   endif(NOT CMAKE_CUDA_ARCHITECTURES)
 
   # for cuda_add_library
